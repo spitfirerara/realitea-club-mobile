@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:realitea_club/menu.dart';
+import 'package:realitea_club/screens/menu.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const RealiteaClub());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class RealiteaClub extends StatelessWidget {
+  const RealiteaClub({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Realitea Club',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.blue)
-            .copyWith(secondary: Colors.blueAccent[400]),
+        colorScheme:
+        ColorScheme.fromSeed(
+          seedColor: const Color(0xFF132440),
+        ),
+        useMaterial3: false,
       ),
-      home: MyHomePage(),
+      home: const MyHomePage(),
     );
   }
 }
-

@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
+
 import 'package:realitea_club/widgets/left_drawer.dart';
 import 'package:realitea_club/screens/product_form.dart';
+import 'package:realitea_club/screens/product_entry_list.dart';
+import 'package:realitea_club/screens/login.dart';
 
 class MyHomePage extends StatelessWidget {
   const MyHomePage({super.key});
@@ -9,19 +14,25 @@ class MyHomePage extends StatelessWidget {
   final String npm = "2406433112";
   final String kelas = "B";
 
+  // Menu homepage
   static const List<ItemHomepage> items = [
     ItemHomepage("All Products", Icons.shopping_bag, Color(0xFF16476A)),
-    ItemHomepage("My Products", Icons.person, Color(0xFF132440)),
     ItemHomepage("Create Product", Icons.add_box, Color(0xFF79A35A)),
+    ItemHomepage("Logout", Icons.logout, Color(0xFF132440)),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final request = context.watch<CookieRequest>();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
           'Realitea Club',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         backgroundColor: Color(0xFF132440),
         foregroundColor: Colors.white,
@@ -36,7 +47,7 @@ class MyHomePage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // === Identitas ===
+              // IDENTITAS
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -59,9 +70,10 @@ class MyHomePage extends StatelessWidget {
 
               const SizedBox(height: 20),
 
-              // === Grid Menu ===
+              // === GRID MENU ===
               GridView.count(
                 shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
                 crossAxisCount: 3,
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
@@ -77,7 +89,7 @@ class MyHomePage extends StatelessWidget {
   }
 }
 
-// === Info Card ===
+// INFO CARD
 class InfoCard extends StatelessWidget {
   final String title;
   final String content;
@@ -103,7 +115,8 @@ class InfoCard extends StatelessWidget {
   }
 }
 
-// === Model Item ===
+// ITEM MODEL
+
 class ItemHomepage {
   final String name;
   final IconData icon;
@@ -112,7 +125,8 @@ class ItemHomepage {
   const ItemHomepage(this.name, this.icon, this.color);
 }
 
-// === Card Menu ===
+// ITEM CARD
+
 class ItemCard extends StatelessWidget {
   final ItemHomepage item;
 
@@ -120,25 +134,53 @@ class ItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final request = context.watch<CookieRequest>();
+
     return Material(
       color: item.color,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
-        onTap: () {
-          if (item.name == "Create Product") {
+        onTap: () async {
+          if (item.name == "All Products") {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ProductEntryListPage(),
+              ),
+            );
+
+          } else if (item.name == "Create Product") {
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => const ProductFormPage(),
               ),
             );
-          } else {
-            ScaffoldMessenger.of(context)
-              ..hideCurrentSnackBar()
-              ..showSnackBar(
-                SnackBar(content: Text("${item.name} belum tersedia")),
+
+          } else if (item.name == "Logout") {
+            final response = await request.logout(
+              "http://localhost:8000/auth/logout/",
+            );
+
+            if (response['status']) {
+              // Show snackbar
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text("${response['message']} See you again!")),
               );
+
+              // Navigate to login
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const LoginPage(),
+                ),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text("Logout failed.")),
+              );
+            }
           }
         },
         child: Column(

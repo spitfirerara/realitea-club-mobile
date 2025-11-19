@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:realitea_club/screens/menu.dart';
 import 'package:realitea_club/screens/product_form.dart';
+import 'package:realitea_club/screens/product_entry_list.dart'; // <-- JANGAN LUPA IMPORT INI
 
 class LeftDrawer extends StatelessWidget {
   const LeftDrawer({super.key});
@@ -12,7 +13,7 @@ class LeftDrawer extends StatelessWidget {
         children: [
           const DrawerHeader(
             decoration: BoxDecoration(
-              color: const Color(0xFF132440),
+              color: Color(0xFF132440),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -28,7 +29,7 @@ class LeftDrawer extends StatelessWidget {
                 ),
                 Padding(padding: EdgeInsets.all(8)),
                 Text(
-                  "Temukan berbagai produk Realitea di sini!",
+                  "Find various new products here!",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 15,
@@ -39,7 +40,7 @@ class LeftDrawer extends StatelessWidget {
             ),
           ),
 
-          // === Routing Items ===
+          // Routing Items
           ListTile(
             leading: const Icon(Icons.home_outlined),
             title: const Text('Home'),
@@ -52,14 +53,28 @@ class LeftDrawer extends StatelessWidget {
               );
             },
           ),
+
           ListTile(
             leading: const Icon(Icons.add_shopping_cart),
-            title: const Text('Tambah Produk'),
+            title: const Text('Add Product'),
             onTap: () {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
                   builder: (context) => const ProductFormPage(),
+                ),
+              );
+            },
+          ),
+
+          ListTile(
+            leading: const Icon(Icons.list),
+            title: const Text('Product List'),
+            onTap: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ProductEntryListPage(),
                 ),
               );
             },

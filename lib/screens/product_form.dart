@@ -1,4 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:realitea_club/screens/menu.dart';
 import 'package:realitea_club/widgets/left_drawer.dart';
 
 class ProductFormPage extends StatefulWidget {
@@ -30,13 +34,18 @@ class _ProductFormPageState extends State<ProductFormPage> {
 
   @override
   Widget build(BuildContext context) {
+
+    // CookieRequest
+    final request = context.watch<CookieRequest>();
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tambah Produk Baru'),
+        title: const Text('Add New Product'),
         backgroundColor: const Color(0xFF79A35A),
         foregroundColor: Colors.white,
       ),
       drawer: const LeftDrawer(),
+
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -44,28 +53,29 @@ class _ProductFormPageState extends State<ProductFormPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // === Product Name ===
+
+              // Product Name
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: TextFormField(
                   decoration: InputDecoration(
-                    labelText: "Nama Produk",
+                    labelText: "Product Name",
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(5),
                     ),
                   ),
                   onChanged: (value) => setState(() => _name = value),
                   validator: (value) =>
-                  (value == null || value.isEmpty) ? "Nama tidak boleh kosong!" : null,
+                  (value == null || value.isEmpty) ? "Name can't be empty!" : null,
                 ),
               ),
 
-              // === Price ===
+              // Price
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: TextFormField(
                   decoration: InputDecoration(
-                    labelText: "Harga",
+                    labelText: "Price",
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(5),
                     ),
@@ -77,31 +87,31 @@ class _ProductFormPageState extends State<ProductFormPage> {
                     });
                   },
                   validator: (value) {
-                    if (value == null || value.isEmpty) return "Harga tidak boleh kosong!";
-                    if (int.tryParse(value) == null) return "Harga harus angka!";
+                    if (value == null || value.isEmpty) return "Price can't be empty!";
+                    if (int.tryParse(value) == null) return "Price should be a value/number!";
                     return null;
                   },
                 ),
               ),
 
-              // === Description ===
+              // Description
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: TextFormField(
                   maxLines: 4,
                   decoration: InputDecoration(
-                    labelText: "Deskripsi",
+                    labelText: "Description",
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(5),
                     ),
                   ),
                   onChanged: (value) => setState(() => _description = value),
                   validator: (value) =>
-                  (value == null || value.isEmpty) ? "Deskripsi tidak boleh kosong!" : null,
+                  (value == null || value.isEmpty) ? "Description can't be empty!" : null,
                 ),
               ),
 
-              // === Thumbnail URL ===
+              // Thumbnail URL
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: TextFormField(
@@ -113,16 +123,16 @@ class _ProductFormPageState extends State<ProductFormPage> {
                   ),
                   onChanged: (value) => setState(() => _thumbnail = value),
                   validator: (value) =>
-                  (value == null || value.isEmpty) ? "Thumbnail tidak boleh kosong!" : null,
+                  (value == null || value.isEmpty) ? "Thumbnail can't be empty!" : null,
                 ),
               ),
 
-              // === Category (Dropdown) ===
+              // Category (Dropdown)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: DropdownButtonFormField<String>(
                   decoration: InputDecoration(
-                    labelText: "Kategori Produk",
+                    labelText: "Product Category",
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(5),
                     ),
@@ -132,7 +142,9 @@ class _ProductFormPageState extends State<ProductFormPage> {
                       .map(
                         (cat) => DropdownMenuItem(
                       value: cat,
-                      child: Text(cat[0].toUpperCase() + cat.substring(1)),
+                      child: Text(
+                        cat[0].toUpperCase() + cat.substring(1),
+                      ),
                     ),
                   )
                       .toList(),
@@ -144,7 +156,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: SwitchListTile(
-                  title: const Text("Produk Featured"),
+                  title: const Text("Product Featured"),
                   value: _isFeatured,
                   onChanged: (value) => setState(() => _isFeatured = value),
                 ),
@@ -159,45 +171,43 @@ class _ProductFormPageState extends State<ProductFormPage> {
                     foregroundColor: Colors.white,
                   ),
                   child: const Text("Save"),
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text("Produk berhasil disimpan!"),
-                          content: SingleChildScrollView(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text("Nama: $_name"),
-                                Text("Harga: $_price"),
-                                Text("Deskripsi: $_description"),
-                                Text("Thumbnail: $_thumbnail"),
-                                Text("Kategori: $_category"),
-                                Text("Featured: ${_isFeatured ? 'Ya' : 'Tidak'}"),
-                              ],
-                            ),
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-                                _formKey.currentState!.reset();
 
-                                setState(() {
-                                  _name = "";
-                                  _price = 0;
-                                  _description = "";
-                                  _thumbnail = "";
-                                  _category = "jersey";
-                                  _isFeatured = false;
-                                });
-                              },
-                              child: const Text("OK"),
-                            ),
-                          ],
-                        ),
+                  onPressed: () async {
+                    if (_formKey.currentState!.validate()) {
+
+                      // CALL DJANGO API via POST JSON
+                      final response = await request.postJson(
+                        "http://localhost:8000/create-product-flutter/",
+                        jsonEncode({
+                          "name": _name,
+                          "price": _price,
+                          "description": _description,
+                          "thumbnail": _thumbnail,
+                          "category": _category,
+                          "is_featured": _isFeatured,
+                        }),
                       );
+
+                      if (!context.mounted) return;
+
+                      if (response['status'] == 'success') {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Successfully add new product")),
+                        );
+
+                        // Redirect ke home
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => const MyHomePage()),
+                        );
+
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Error, try again."),
+                          ),
+                        );
+                      }
                     }
                   },
                 ),
